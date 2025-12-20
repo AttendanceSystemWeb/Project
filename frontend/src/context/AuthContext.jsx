@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
 import { API_URL } from '../config';
 
 const AuthContext = createContext(null);
@@ -27,12 +26,24 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        username,
-        password
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+        cache: 'no-store' // Prevent caching
       });
 
-      const { token: newToken, user: userData } = response.data;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Login failed' }));
+        return {
+          success: false,
+          error: errorData.error || 'Login failed'
+        };
+      }
+
+      const { token: newToken, user: userData } = await response.json();
       
       sessionStorage.setItem('token', newToken);
       sessionStorage.setItem('user', JSON.stringify(userData));
@@ -42,9 +53,20 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true };
     } catch (error) {
+      // Handle network errors
+      if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        console.error('Network error - may be blocked by ad blocker:', error);
+        // Store error for UI to display
+        if (!sessionStorage.getItem('adBlockerWarningShown')) {
+          sessionStorage.setItem('adBlockerWarning', 'true');
+          sessionStorage.setItem('adBlockerWarningShown', 'true');
+          window.dispatchEvent(new CustomEvent('adBlockerDetected'));
+        }
+      }
+      
       return {
         success: false,
-        error: error.response?.data?.error || 'Login failed'
+        error: error.message || 'Login failed. Please check your connection or disable ad blocker.'
       };
     }
   };
@@ -78,4 +100,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-

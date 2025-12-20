@@ -1,80 +1,138 @@
-import axios from 'axios';
 import { API_URL } from '../config';
 
-const api = axios.create({
-  baseURL: API_URL
-});
+// Fetch-based API client (more compatible with ad blockers than Axios/XMLHttpRequest)
+const fetchAPI = async (endpoint, options = {}) => {
+  const token = sessionStorage.getItem('token');
+  
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
 
-// Request interceptor to add token
-api.interceptors.request.use(
-  (config) => {
-    const token = sessionStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+  const config = {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+    // Prevent caching
+    cache: 'no-store',
+  };
 
-// Response interceptor to handle errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  // Add cache-busting timestamp for GET requests
+  if (!options.method || options.method === 'GET') {
+    const separator = endpoint.includes('?') ? '&' : '?';
+    endpoint = `${endpoint}${separator}_t=${Date.now()}`;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, config);
+    
+    // Handle 401 Unauthorized
+    if (response.status === 401) {
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
       window.location.href = '/login';
+      throw new Error('Unauthorized');
     }
-    return Promise.reject(error);
+
+    // Handle errors
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(errorData.error || `HTTP ${response.status}`);
+    }
+
+    // Parse JSON response
+    const data = await response.json();
+    
+    // Return in Axios-like format for compatibility
+    return { data };
+  } catch (error) {
+    // Detect network/CORS errors
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+      console.error('Network error - may be blocked by ad blocker:', error);
+      // Store error for UI to display
+      if (!sessionStorage.getItem('adBlockerWarningShown')) {
+        sessionStorage.setItem('adBlockerWarning', 'true');
+        sessionStorage.setItem('adBlockerWarningShown', 'true');
+        window.dispatchEvent(new CustomEvent('adBlockerDetected'));
+      }
+    }
+    throw error;
   }
-);
+};
 
 // Admin APIs
 export const adminAPI = {
-  // Classes
-  getClasses: () => api.get('/admin/classes'),
-  createClass: (data) => api.post('/admin/classes', data),
-  deleteClass: (id) => api.delete(`/admin/classes/${id}`),
-
-  // Subjects
-  getSubjects: () => api.get('/admin/subjects'),
-  createSubject: (data) => api.post('/admin/subjects', data),
-  deleteSubject: (id) => api.delete(`/admin/subjects/${id}`),
-
-  // Students
-  getStudents: (classId) => api.get('/admin/students', { params: { classId } }),
-  createStudent: (data) => api.post('/admin/students', data),
-  deleteStudent: (id) => api.delete(`/admin/students/${id}`),
-
-  // Teachers
-  getTeachers: () => api.get('/admin/teachers'),
-  createTeacher: (data) => api.post('/admin/teachers', data),
-  deleteTeacher: (id) => api.delete(`/admin/teachers/${id}`),
-
-  // Assignments
-  getAssignments: (teacherId) => api.get('/admin/assignments', { params: { teacherId } }),
-  createAssignment: (data) => api.post('/admin/assignments', data),
-  deleteAssignment: (id) => api.delete(`/admin/assignments/${id}`),
-
-  // Attendance
-  getAttendanceRecords: (filters) => api.get('/admin/attendance', { params: filters }),
-  getStudentAttendanceStats: (filters) => api.get('/admin/attendance/student-stats', { params: filters })
+  getClasses: () => fetchAPI('/admin/classes'),
+  createClass: (data) => fetchAPI('/admin/classes', { method: 'POST', body: JSON.stringify(data) }),
+  deleteClass: (id) => fetchAPI(`/admin/classes/${id}`, { method: 'DELETE' }),
+  
+  getSubjects: () => fetchAPI('/admin/subjects'),
+  createSubject: (data) => fetchAPI('/admin/subjects', { method: 'POST', body: JSON.stringify(data) }),
+  deleteSubject: (id) => fetchAPI(`/admin/subjects/${id}`, { method: 'DELETE' }),
+  
+  getStudents: (classId) => {
+    const endpoint = classId ? `/admin/students?classId=${classId}` : '/admin/students';
+    return fetchAPI(endpoint);
+  },
+  createStudent: (data) => fetchAPI('/admin/students', { method: 'POST', body: JSON.stringify(data) }),
+  deleteStudent: (id) => fetchAPI(`/admin/students/${id}`, { method: 'DELETE' }),
+  
+  getTeachers: () => fetchAPI('/admin/teachers'),
+  createTeacher: (data) => fetchAPI('/admin/teachers', { method: 'POST', body: JSON.stringify(data) }),
+  deleteTeacher: (id) => fetchAPI(`/admin/teachers/${id}`, { method: 'DELETE' }),
+  
+  getAssignments: (teacherId) => {
+    const endpoint = teacherId ? `/admin/assignments?teacherId=${teacherId}` : '/admin/assignments';
+    return fetchAPI(endpoint);
+  },
+  createAssignment: (data) => fetchAPI('/admin/assignments', { method: 'POST', body: JSON.stringify(data) }),
+  deleteAssignment: (id) => fetchAPI(`/admin/assignments/${id}`, { method: 'DELETE' }),
+  
+  getAttendanceRecords: (filters) => {
+    const params = new URLSearchParams(filters || {}).toString();
+    const endpoint = params ? `/admin/attendance?${params}` : '/admin/attendance';
+    return fetchAPI(endpoint);
+  },
+  getStudentAttendanceStats: (filters) => {
+    const params = new URLSearchParams(filters || {}).toString();
+    const endpoint = params ? `/admin/attendance/student-stats?${params}` : '/admin/attendance/student-stats';
+    return fetchAPI(endpoint);
+  }
 };
 
 // Teacher APIs
 export const teacherAPI = {
-  getAssignments: () => api.get('/teacher/assignments'),
-  getStudents: (classId, subjectId) => api.get('/teacher/students', { params: { classId, subjectId } }),
-  submitAttendance: (data) => api.post('/teacher/attendance', data),
-  getAttendanceHistory: (filters) => api.get('/teacher/attendance/history', { params: filters })
+  getAssignments: () => fetchAPI('/teacher/assignments'),
+  getStudents: (classId, subjectId) => {
+    const params = new URLSearchParams({ classId, subjectId }).toString();
+    return fetchAPI(`/teacher/students?${params}`);
+  },
+  submitAttendance: (data) => fetchAPI('/teacher/attendance', { method: 'POST', body: JSON.stringify(data) }),
+  getAttendanceHistory: (filters) => {
+    const params = new URLSearchParams(filters || {}).toString();
+    const endpoint = params ? `/teacher/attendance/history?${params}` : '/teacher/attendance/history';
+    return fetchAPI(endpoint);
+  }
 };
 
 // User Management APIs
 export const userAPI = {
-  getUserInfo: (userId) => api.get(`/users/${userId}`),
-  updateCredentials: (userId, data) => api.put(`/users/${userId}/credentials`, data)
+  getUserInfo: (userId) => fetchAPI(`/users/${userId}`),
+  updateCredentials: (userId, data) => fetchAPI(`/users/${userId}/credentials`, { 
+    method: 'PUT', 
+    body: JSON.stringify(data) 
+  })
 };
 
-export default api;
-
+// Default export for backward compatibility
+export default {
+  get: (url) => fetchAPI(url),
+  post: (url, data) => fetchAPI(url, { method: 'POST', body: JSON.stringify(data) }),
+  put: (url, data) => fetchAPI(url, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (url) => fetchAPI(url, { method: 'DELETE' })
+};
