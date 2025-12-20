@@ -1,14 +1,13 @@
 // Quick script to create admin user
 import bcrypt from 'bcrypt';
 import pg from 'pg';
-import dotenv from 'dotenv';
 
-dotenv.config();
+// Use your production connection string
+const connectionString = 'postgresql://postgres.cguoxpmwqatnpuuommsh:WWG7OjwLJMGoN29G@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres';
 
 const { Pool } = pg;
-
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: connectionString
 });
 
 async function createAdmin() {
@@ -32,6 +31,7 @@ async function createAdmin() {
     console.log('Username: admin');
     console.log('Password: admin123');
     
+    await pool.end();
     process.exit(0);
   } catch (error) {
     console.error('❌ Error:', error.message);
@@ -40,4 +40,3 @@ async function createAdmin() {
 }
 
 createAdmin();
-
