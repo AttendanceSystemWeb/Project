@@ -28,6 +28,18 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/users', userRoutes);
 
+// Debug logging
+console.log('✓ Routes registered:');
+console.log('  - /api/auth');
+console.log('  - /api/admin');
+console.log('  - /api/teacher');
+console.log('  - /api/users');
+
+// Test route registration
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API routes are working!' });
+});
+
 // Error handling
 app.use(errorHandler);
 
