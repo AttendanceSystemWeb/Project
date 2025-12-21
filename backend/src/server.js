@@ -13,21 +13,8 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Helper function to set CORS headers (for manual use in endpoints)
-const setCORSHeaders = (res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
-  
-  // CRITICAL: Prevent caching of responses to avoid stale CORS failures
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-};
-
 // CORS configuration using cors package (MUST be first, before any other middleware)
+// This handles all CORS including preflight OPTIONS requests automatically
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -39,10 +26,12 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-// Additional middleware to ensure CORS headers are always set and prevent caching
+// Additional middleware to prevent caching of responses
 app.use((req, res, next) => {
-  // Ensure CORS headers are set (backup)
-  setCORSHeaders(res);
+  // CRITICAL: Prevent caching of responses to avoid stale CORS failures
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   next();
 });
 
@@ -51,7 +40,6 @@ app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  setCORSHeaders(res);
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
@@ -70,7 +58,6 @@ console.log('  - /api/users');
 
 // Test route for debugging
 app.get('/api/test', (req, res) => {
-  setCORSHeaders(res);
   res.json({ message: 'API routes are working!' });
 });
 
@@ -79,7 +66,6 @@ app.use(errorHandler);
 
 // 404 handler (must be last)
 app.use((req, res) => {
-  setCORSHeaders(res);
   res.status(404).json({ error: 'Route not found' });
 });
 
