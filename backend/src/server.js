@@ -13,27 +13,47 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS configuration using cors package (MUST be first, before any other middleware)
-// This handles all CORS including preflight OPTIONS requests automatically
+// CORS helper function
+const setCORSHeaders = (res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+};
+
+// Handle OPTIONS requests FIRST (before any other middleware)
+app.options('*', (req, res) => {
+  setCORSHeaders(res);
+  res.status(204).end();
+});
+
+// CORS middleware for all requests (MUST be first, before any other middleware)
+app.use((req, res, next) => {
+  setCORSHeaders(res);
+  
+  // Handle preflight requests immediately
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  
+  next();
+});
+
+// Also use cors package as backup
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400, // 24 hours
+  maxAge: 86400,
   credentials: false,
   preflightContinue: false,
   optionsSuccessStatus: 204
 }));
-
-// Additional middleware to prevent caching of responses
-app.use((req, res, next) => {
-  // CRITICAL: Prevent caching of responses to avoid stale CORS failures
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  next();
-});
 
 // Body parser middleware
 app.use(express.json());
@@ -59,6 +79,22 @@ console.log('  - /api/users');
 // Test route for debugging
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API routes are working!' });
+});
+
+// CORS test endpoint (no auth required)
+app.get('/api/cors-test', (req, res) => {
+  res.json({ 
+    message: 'CORS test successful',
+    headers: {
+      'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+      'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods')
+    }
+  });
+});
+
+app.options('/api/cors-test', (req, res) => {
+  setCORSHeaders(res);
+  res.status(204).end();
 });
 
 // Error handling middleware (must be after routes)
