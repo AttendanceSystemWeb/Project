@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -12,7 +13,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Helper function to set CORS headers
+// Helper function to set CORS headers (for manual use in endpoints)
 const setCORSHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
@@ -26,21 +27,22 @@ const setCORSHeaders = (res) => {
   res.setHeader('Expires', '0');
 };
 
-// Explicit OPTIONS handler for all routes (backup - handles preflight requests)
-app.options('*', (req, res) => {
-  setCORSHeaders(res);
-  res.status(204).end();
-});
+// CORS configuration using cors package (MUST be first, before any other middleware)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400, // 24 hours
+  credentials: false,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+}));
 
-// Middleware - CORS configuration (MUST be first, before any other middleware)
+// Additional middleware to ensure CORS headers are always set and prevent caching
 app.use((req, res, next) => {
+  // Ensure CORS headers are set (backup)
   setCORSHeaders(res);
-  
-  // Handle preflight requests immediately
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-  
   next();
 });
 
