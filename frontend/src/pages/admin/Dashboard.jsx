@@ -32,6 +32,18 @@ const Dashboard = () => {
       });
     } catch (error) {
       console.error('Error loading stats:', error);
+      
+      // Check if error is due to expired token
+      if (error.message === 'Unauthorized - Please log in again' || 
+          error.message === 'Session expired - Please log in again' ||
+          error.message?.includes('token') || 
+          error.message?.includes('expired')) {
+        // Token expired, api.js will handle redirect
+        return;
+      }
+      
+      // Show error message to user for other errors
+      console.error('Failed to load dashboard data:', error.message);
     } finally {
       setLoading(false);
     }

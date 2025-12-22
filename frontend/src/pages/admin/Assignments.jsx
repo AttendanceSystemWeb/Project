@@ -34,6 +34,18 @@ const Assignments = () => {
       setSubjects(subjectsRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
+      
+      // Check if error is due to expired token
+      if (error.message === 'Unauthorized - Please log in again' || 
+          error.message === 'Session expired - Please log in again' ||
+          error.message?.includes('token') || 
+          error.message?.includes('expired')) {
+        // Token expired, api.js will handle redirect
+        return;
+      }
+      
+      // Show error message for other errors
+      console.error('Failed to load data:', error.message);
     } finally {
       setLoading(false);
     }

@@ -11,17 +11,71 @@ export const useAuth = () => {
   return context;
 };
 
+// Helper function to check if JWT token is expired
+const isTokenExpired = (token) => {
+  if (!token) return true;
+  
+  try {
+    // JWT tokens have 3 parts separated by dots: header.payload.signature
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const exp = payload.exp * 1000; // Convert to milliseconds
+    const now = Date.now();
+    return now >= exp;
+  } catch (error) {
+    // If we can't parse the token, consider it expired
+    return true;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(sessionStorage.getItem('token'));
+  const [token, setToken] = useState(() => {
+    const storedToken = sessionStorage.getItem('token');
+    // Check if token is expired on load
+    if (storedToken && isTokenExpired(storedToken)) {
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      return null;
+    }
+    return storedToken;
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (token) {
+      // Check token expiration periodically
+      if (isTokenExpired(token)) {
+        // Token expired, clear it
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        setToken(null);
+        setUser(null);
+        // Redirect to login
+        window.location.href = '/login';
+        return;
+      }
+      
       const userData = JSON.parse(sessionStorage.getItem('user') || 'null');
       setUser(userData);
     }
     setLoading(false);
+  }, [token]);
+
+  // Check token expiration every 5 minutes
+  useEffect(() => {
+    if (!token) return;
+    
+    const checkInterval = setInterval(() => {
+      if (isTokenExpired(token)) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        setToken(null);
+        setUser(null);
+        window.location.href = '/login';
+      }
+    }, 5 * 60 * 1000); // Check every 5 minutes
+
+    return () => clearInterval(checkInterval);
   }, [token]);
 
   const login = async (username, password) => {
@@ -79,6 +133,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const getAuthHeader = () => {
+    // Check token expiration before returning header
+    if (token && isTokenExpired(token)) {
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      setToken(null);
+      setUser(null);
+      window.location.href = '/login';
+      return {};
+    }
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
@@ -91,7 +154,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         getAuthHeader,
-        isAuthenticated: !!token,
+        isAuthenticated: !!token && !isTokenExpired(token),
         isAdmin: user?.role === 'admin',
         isTeacher: user?.role === 'teacher'
       }}

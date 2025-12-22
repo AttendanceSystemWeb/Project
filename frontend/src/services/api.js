@@ -31,15 +31,31 @@ const fetchAPI = async (endpoint, options = {}) => {
   try {
     const response = await fetch(`${API_URL}${endpoint}`, config);
     
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized (expired or invalid token)
     if (response.status === 401) {
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
-      window.location.href = '/login';
-      throw new Error('Unauthorized');
+      // Only redirect if we're not already on login page
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+      throw new Error('Unauthorized - Please log in again');
+    }
+    
+    // Handle 403 Forbidden (expired token)
+    if (response.status === 403) {
+      const errorData = await response.json().catch(() => ({ error: 'Forbidden' }));
+      if (errorData.error?.includes('expired') || errorData.error?.includes('token')) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        throw new Error('Session expired - Please log in again');
+      }
     }
 
-    // Handle errors
+    // Handle other errors
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
       throw new Error(errorData.error || `HTTP ${response.status}`);

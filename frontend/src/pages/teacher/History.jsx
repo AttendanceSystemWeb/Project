@@ -25,6 +25,18 @@ const History = () => {
       setAssignments(assignmentsRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
+      
+      // Check if error is due to expired token
+      if (error.message === 'Unauthorized - Please log in again' || 
+          error.message === 'Session expired - Please log in again' ||
+          error.message?.includes('token') || 
+          error.message?.includes('expired')) {
+        // Token expired, api.js will handle redirect
+        return;
+      }
+      
+      // Show error message for other errors
+      console.error('Failed to load data:', error.message);
     } finally {
       setLoading(false);
     }
@@ -37,6 +49,18 @@ const History = () => {
       setHistory(response.data);
     } catch (error) {
       console.error('Error loading history:', error);
+      
+      // Check if error is due to expired token
+      if (error.message === 'Unauthorized - Please log in again' || 
+          error.message === 'Session expired - Please log in again' ||
+          error.message?.includes('token') || 
+          error.message?.includes('expired')) {
+        // Token expired, api.js will handle redirect
+        return;
+      }
+      
+      // Show error message for other errors
+      console.error('Failed to load history:', error.message);
     } finally {
       setLoading(false);
     }
