@@ -25,7 +25,20 @@ const setCORSHeaders = (res) => {
   res.setHeader('Expires', '0');
 };
 
-// CRITICAL: CORS must be FIRST middleware - handles all OPTIONS preflight requests automatically
+// CRITICAL: Handle OPTIONS requests at the absolute top level BEFORE anything else
+app.use((req, res, next) => {
+  // Set CORS headers on every request
+  setCORSHeaders(res);
+  
+  // Handle OPTIONS preflight requests immediately
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  
+  next();
+});
+
+// Use cors package as additional layer (handles edge cases)
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -36,13 +49,6 @@ app.use(cors({
   preflightContinue: false,
   optionsSuccessStatus: 204
 }));
-
-// Additional CORS middleware to ensure headers are always set (backup)
-app.use((req, res, next) => {
-  // Always set CORS headers on every response
-  setCORSHeaders(res);
-  next();
-});
 
 // Body parser middleware
 app.use(express.json());
