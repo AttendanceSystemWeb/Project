@@ -25,9 +25,15 @@ const setCORSHeaders = (res) => {
   res.setHeader('Expires', '0');
 };
 
+// CRITICAL: Handle ALL OPTIONS requests FIRST, before any other middleware
+app.options('*', (req, res) => {
+  setCORSHeaders(res);
+  res.status(204).end();
+});
+
 // CORS middleware for all requests (MUST be first, before any other middleware)
 app.use((req, res, next) => {
-  // Always set CORS headers first
+  // Always set CORS headers first on every request
   setCORSHeaders(res);
   
   // Handle preflight requests immediately - return before any other processing
@@ -36,12 +42,6 @@ app.use((req, res, next) => {
   }
   
   next();
-});
-
-// Explicit OPTIONS handler for all routes (backup)
-app.options('*', (req, res) => {
-  setCORSHeaders(res);
-  res.status(204).end();
 });
 
 // Also use cors package as backup
@@ -62,6 +62,12 @@ app.use(express.json());
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Explicit OPTIONS handlers for all API paths (before routes)
+app.options('/api/*', (req, res) => {
+  setCORSHeaders(res);
+  res.status(204).end();
 });
 
 // API Routes

@@ -4,6 +4,15 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Handle OPTIONS requests for all user routes (CORS preflight)
+router.options('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.status(204).end();
+});
+
 // All routes require authentication
 router.use(authenticateToken);
 
