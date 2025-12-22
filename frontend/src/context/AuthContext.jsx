@@ -42,6 +42,27 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if app was left for a long time (detect stale session/CORS cache)
+    const lastActivity = sessionStorage.getItem('lastActivity');
+    const now = Date.now();
+    const timeSinceLastActivity = lastActivity ? now - parseInt(lastActivity) : Infinity;
+    
+    // If more than 1 hour, force fresh CORS preflight to clear any cached failures
+    if (timeSinceLastActivity > 60 * 60 * 1000) {
+      // Force fresh CORS preflight by making a test request
+      fetch(`${API_URL}/health/cors?_fresh=${Date.now()}`, {
+        method: 'GET',
+        cache: 'no-store',
+        mode: 'cors',
+        credentials: 'omit'
+      }).catch(() => {
+        // Ignore errors, just forcing cache clear
+      });
+    }
+    
+    // Update last activity
+    sessionStorage.setItem('lastActivity', now.toString());
+    
     if (token) {
       // Check token expiration periodically
       if (isTokenExpired(token)) {
@@ -61,11 +82,14 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, [token]);
 
-  // Check token expiration every 5 minutes
+  // Check token expiration every 5 minutes and update last activity
   useEffect(() => {
     if (!token) return;
     
     const checkInterval = setInterval(() => {
+      // Update last activity timestamp
+      sessionStorage.setItem('lastActivity', Date.now().toString());
+      
       if (isTokenExpired(token)) {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');
@@ -77,6 +101,24 @@ export const AuthProvider = ({ children }) => {
 
     return () => clearInterval(checkInterval);
   }, [token]);
+  
+  // Update last activity on user interaction
+  useEffect(() => {
+    const updateActivity = () => {
+      sessionStorage.setItem('lastActivity', Date.now().toString());
+    };
+    
+    // Update on user activity (mouse move, click, keypress)
+    window.addEventListener('mousemove', updateActivity);
+    window.addEventListener('click', updateActivity);
+    window.addEventListener('keypress', updateActivity);
+    
+    return () => {
+      window.removeEventListener('mousemove', updateActivity);
+      window.removeEventListener('click', updateActivity);
+      window.removeEventListener('keypress', updateActivity);
+    };
+  }, []);
 
   const login = async (username, password) => {
     try {

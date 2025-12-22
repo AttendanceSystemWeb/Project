@@ -19,7 +19,8 @@ const setCORSHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.setHeader('Access-Control-Expose-Headers', 'Content-Type', 'Authorization');
-  res.setHeader('Access-Control-Max-Age', '86400');
+  // Reduced from 86400 (24 hours) to 300 (5 minutes) to prevent long-term caching of failed preflight responses
+  res.setHeader('Access-Control-Max-Age', '300');
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
@@ -44,7 +45,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400,
+  maxAge: 300, // Reduced from 86400 to prevent long-term caching of failed preflight responses
   credentials: false,
   preflightContinue: false,
   optionsSuccessStatus: 204

@@ -52,15 +52,17 @@ const fetchAPI = async (endpoint, options = {}) => {
       ...defaultHeaders,
       ...options.headers,
     },
-    // Prevent caching
+    // Prevent caching - CRITICAL for CORS
     cache: 'no-store',
+    // Add these to prevent any caching
+    mode: 'cors',
+    credentials: 'omit'
   };
 
-  // Add cache-busting timestamp for GET requests
-  if (!options.method || options.method === 'GET') {
-    const separator = endpoint.includes('?') ? '&' : '?';
-    endpoint = `${endpoint}${separator}_t=${Date.now()}`;
-  }
+  // Add cache-busting timestamp for ALL requests (including OPTIONS preflight)
+  // This ensures browsers don't use cached failed CORS responses
+  const separator = endpoint.includes('?') ? '&' : '?';
+  endpoint = `${endpoint}${separator}_t=${Date.now()}`;
 
   try {
     const response = await fetch(`${API_URL}${endpoint}`, config);
@@ -103,7 +105,30 @@ const fetchAPI = async (endpoint, options = {}) => {
   } catch (error) {
     // Detect network/CORS errors
     if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
-      console.error('Network error - may be blocked by ad blocker:', error);
+      console.error('Network error - may be blocked by ad blocker or CORS issue:', error);
+      
+      // Check if this might be a CORS cache issue - retry with fresh cache-busting
+      const isCORSError = error.message === 'Failed to fetch';
+      if (isCORSError) {
+        // Try once more with even more aggressive cache-busting
+        try {
+          const retryEndpoint = `${endpoint}${endpoint.includes('?') ? '&' : '?'}_cors_retry=${Date.now()}_${Math.random()}`;
+          const retryResponse = await fetch(`${API_URL}${retryEndpoint}`, {
+            ...config,
+            cache: 'no-store',
+            mode: 'cors',
+            credentials: 'omit'
+          });
+          
+          if (retryResponse.ok) {
+            const data = await retryResponse.json();
+            return { data };
+          }
+        } catch (retryError) {
+          // Retry failed, continue with original error
+        }
+      }
+      
       // Store error for UI to display
       if (!sessionStorage.getItem('adBlockerWarningShown')) {
         sessionStorage.setItem('adBlockerWarning', 'true');
