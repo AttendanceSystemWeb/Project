@@ -1,5 +1,39 @@
 import { API_URL } from '../config';
 
+// CORS health check function
+export const checkCORS = async () => {
+  try {
+    // Test OPTIONS preflight
+    const optionsResponse = await fetch(`${API_URL}/health/cors`, {
+      method: 'OPTIONS',
+      cache: 'no-store'
+    });
+    
+    // Test GET request
+    const getResponse = await fetch(`${API_URL}/health/cors?_t=${Date.now()}`, {
+      method: 'GET',
+      cache: 'no-store'
+    });
+    
+    if (!getResponse.ok) {
+      return { working: false, error: `HTTP ${getResponse.status}` };
+    }
+    
+    const data = await getResponse.json();
+    return {
+      working: data.cors?.working === true,
+      details: data.cors,
+      optionsStatus: optionsResponse.status
+    };
+  } catch (error) {
+    return {
+      working: false,
+      error: error.message || 'CORS check failed',
+      isCORSIssue: error.message === 'Failed to fetch' || error.name === 'TypeError'
+    };
+  }
+};
+
 // Fetch-based API client (more compatible with ad blockers than Axios/XMLHttpRequest)
 const fetchAPI = async (endpoint, options = {}) => {
   const token = sessionStorage.getItem('token');

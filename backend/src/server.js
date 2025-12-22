@@ -58,6 +58,31 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Comprehensive CORS health check endpoint
+app.get('/health/cors', (req, res) => {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+    'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
+    'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
+  };
+  
+  const isCORSWorking = corsHeaders['Access-Control-Allow-Origin'] === '*';
+  
+  res.json({
+    status: isCORSWorking ? 'OK' : 'ERROR',
+    cors: {
+      working: isCORSWorking,
+      headers: corsHeaders,
+      timestamp: new Date().toISOString()
+    }
+  });
+});
+
+app.options('/health/cors', (req, res) => {
+  setCORSHeaders(res);
+  res.status(204).end();
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -107,6 +132,8 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`✓ Server running on port ${PORT}`);
   console.log(`✓ Server accessible at http://0.0.0.0:${PORT}`);
   console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✓ CORS configured: All origins allowed (*)`);
+  console.log(`✓ CORS health check: http://0.0.0.0:${PORT}/health/cors`);
 });
 
 // Graceful shutdown
