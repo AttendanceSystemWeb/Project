@@ -13,38 +13,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS helper function
+// CORS helper function (for manual header setting when needed)
 const setCORSHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Type', 'Authorization');
   res.setHeader('Access-Control-Max-Age', '86400');
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
 };
 
-// CRITICAL: Handle ALL OPTIONS requests FIRST, before any other middleware
-app.options('*', (req, res) => {
-  setCORSHeaders(res);
-  res.status(204).end();
-});
-
-// CORS middleware for all requests (MUST be first, before any other middleware)
-app.use((req, res, next) => {
-  // Always set CORS headers first on every request
-  setCORSHeaders(res);
-  
-  // Handle preflight requests immediately - return before any other processing
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-  
-  next();
-});
-
-// Also use cors package as backup
+// CRITICAL: CORS must be FIRST middleware - handles all OPTIONS preflight requests automatically
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -56,18 +37,19 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
+// Additional CORS middleware to ensure headers are always set (backup)
+app.use((req, res, next) => {
+  // Always set CORS headers on every response
+  setCORSHeaders(res);
+  next();
+});
+
 // Body parser middleware
 app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// Explicit OPTIONS handlers for all API paths (before routes)
-app.options('/api/*', (req, res) => {
-  setCORSHeaders(res);
-  res.status(204).end();
 });
 
 // API Routes

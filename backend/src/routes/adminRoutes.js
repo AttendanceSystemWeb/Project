@@ -5,7 +5,7 @@ import { authenticateToken, authorizeRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Handle OPTIONS requests for all admin routes (CORS preflight)
+// Handle OPTIONS requests FIRST (before auth middleware)
 router.options('*', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
