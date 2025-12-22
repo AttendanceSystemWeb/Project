@@ -25,22 +25,23 @@ const setCORSHeaders = (res) => {
   res.setHeader('Expires', '0');
 };
 
-// Handle OPTIONS requests FIRST (before any other middleware)
-app.options('*', (req, res) => {
-  setCORSHeaders(res);
-  res.status(204).end();
-});
-
 // CORS middleware for all requests (MUST be first, before any other middleware)
 app.use((req, res, next) => {
+  // Always set CORS headers first
   setCORSHeaders(res);
   
-  // Handle preflight requests immediately
+  // Handle preflight requests immediately - return before any other processing
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
   
   next();
+});
+
+// Explicit OPTIONS handler for all routes (backup)
+app.options('*', (req, res) => {
+  setCORSHeaders(res);
+  res.status(204).end();
 });
 
 // Also use cors package as backup
@@ -102,6 +103,8 @@ app.use(errorHandler);
 
 // 404 handler (must be last)
 app.use((req, res) => {
+  // CRITICAL: Set CORS headers even for 404 responses
+  setCORSHeaders(res);
   res.status(404).json({ error: 'Route not found' });
 });
 
