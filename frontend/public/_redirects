@@ -1,1 +1,5 @@
 /*    /index.html   200
+
+# Proxy API calls to backend (avoids ad blockers and CORS)
+# All requests to /api/* will be proxied to the backend
+/api/*  https://site--sams-backend--zj5y5bs2dc2g.code.run/api/:splat  200

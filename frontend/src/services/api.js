@@ -3,16 +3,38 @@ import { API_URL } from '../config';
 // CORS health check function
 export const checkCORS = async () => {
   try {
-    // Test OPTIONS preflight
+    // When using Netlify proxy (relative URL), no CORS preflight needed
+    if (API_URL.startsWith('/')) {
+      const getResponse = await fetch(`${API_URL}/health/cors?_t=${Date.now()}`, {
+        method: 'GET',
+        cache: 'no-store',
+        mode: 'same-origin'
+      });
+      
+      if (!getResponse.ok) {
+        return { working: false, error: `HTTP ${getResponse.status}` };
+      }
+      
+      const data = await getResponse.json();
+      return {
+        working: true,
+        details: data.cors,
+        proxied: true
+      };
+    }
+    
+    // For absolute URLs (development), test OPTIONS preflight
     const optionsResponse = await fetch(`${API_URL}/health/cors`, {
       method: 'OPTIONS',
-      cache: 'no-store'
+      cache: 'no-store',
+      mode: 'cors'
     });
     
     // Test GET request
     const getResponse = await fetch(`${API_URL}/health/cors?_t=${Date.now()}`, {
       method: 'GET',
-      cache: 'no-store'
+      cache: 'no-store',
+      mode: 'cors'
     });
     
     if (!getResponse.ok) {
@@ -52,10 +74,11 @@ const fetchAPI = async (endpoint, options = {}) => {
       ...defaultHeaders,
       ...options.headers,
     },
-    // Prevent caching - CRITICAL for CORS
+    // Prevent caching
     cache: 'no-store',
-    // Add these to prevent any caching
-    mode: 'cors',
+    // When using relative URLs (Netlify proxy), mode can be 'same-origin'
+    // When using absolute URLs (development), use 'cors'
+    mode: API_URL.startsWith('/') ? 'same-origin' : 'cors',
     credentials: 'omit'
   };
 
@@ -113,10 +136,11 @@ const fetchAPI = async (endpoint, options = {}) => {
         // Try once more with even more aggressive cache-busting
         try {
           const retryEndpoint = `${endpoint}${endpoint.includes('?') ? '&' : '?'}_cors_retry=${Date.now()}_${Math.random()}`;
+          const retryMode = API_URL.startsWith('/') ? 'same-origin' : 'cors';
           const retryResponse = await fetch(`${API_URL}${retryEndpoint}`, {
             ...config,
             cache: 'no-store',
-            mode: 'cors',
+            mode: retryMode,
             credentials: 'omit'
           });
           

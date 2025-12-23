@@ -47,13 +47,15 @@ export const AuthProvider = ({ children }) => {
     const now = Date.now();
     const timeSinceLastActivity = lastActivity ? now - parseInt(lastActivity) : Infinity;
     
-    // If more than 1 hour, force fresh CORS preflight to clear any cached failures
+    // If more than 1 hour, force fresh request to clear any cached failures
     if (timeSinceLastActivity > 60 * 60 * 1000) {
-      // Force fresh CORS preflight by making a test request
+      // Force fresh request by making a test request
+      // Use same-origin mode when using Netlify proxy
+      const mode = API_URL.startsWith('/') ? 'same-origin' : 'cors';
       fetch(`${API_URL}/health/cors?_fresh=${Date.now()}`, {
         method: 'GET',
         cache: 'no-store',
-        mode: 'cors',
+        mode: mode,
         credentials: 'omit'
       }).catch(() => {
         // Ignore errors, just forcing cache clear
