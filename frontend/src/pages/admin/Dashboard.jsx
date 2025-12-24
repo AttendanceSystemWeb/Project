@@ -10,26 +10,60 @@ const Dashboard = () => {
     teachers: 0
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadStats();
   }, []);
 
   const loadStats = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      const [classes, subjects, students, teachers] = await Promise.all([
+      // Load stats individually to handle partial failures
+      const results = await Promise.allSettled([
         adminAPI.getClasses(),
         adminAPI.getSubjects(),
         adminAPI.getStudents(),
         adminAPI.getTeachers()
       ]);
 
-      setStats({
-        classes: classes.data.length,
-        subjects: subjects.data.length,
-        students: students.data.length,
-        teachers: teachers.data.length
-      });
+      // Update stats only for successful requests
+      const [classesResult, subjectsResult, studentsResult, teachersResult] = results;
+      
+      if (classesResult.status === 'fulfilled' && classesResult.value?.data) {
+        setStats(prev => ({ ...prev, classes: classesResult.value.data.length }));
+      }
+      
+      if (subjectsResult.status === 'fulfilled' && subjectsResult.value?.data) {
+        setStats(prev => ({ ...prev, subjects: subjectsResult.value.data.length }));
+      }
+      
+      if (studentsResult.status === 'fulfilled' && studentsResult.value?.data) {
+        setStats(prev => ({ ...prev, students: studentsResult.value.data.length }));
+      }
+      
+      if (teachersResult.status === 'fulfilled' && teachersResult.value?.data) {
+        setStats(prev => ({ ...prev, teachers: teachersResult.value.data.length }));
+      }
+
+      // Check if any requests failed
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        const errorMessages = failures
+          .map(r => r.reason?.message || 'Unknown error')
+          .filter((msg, idx, arr) => arr.indexOf(msg) === idx); // Remove duplicates
+        
+        // Don't show error for token expiration (redirect will happen)
+        const nonAuthErrors = errorMessages.filter(
+          msg => !msg.includes('Unauthorized') && !msg.includes('expired')
+        );
+        
+        if (nonAuthErrors.length > 0) {
+          setError(`Some data failed to load: ${nonAuthErrors.join(', ')}. Please refresh the page.`);
+        }
+      }
     } catch (error) {
       console.error('Error loading stats:', error);
       
@@ -42,8 +76,7 @@ const Dashboard = () => {
         return;
       }
       
-      // Show error message to user for other errors
-      console.error('Failed to load dashboard data:', error.message);
+      setError(error.message || 'Failed to load dashboard data. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -60,6 +93,19 @@ const Dashboard = () => {
     <Layout>
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">Admin Dashboard</h1>
+
+        {error && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+            <p className="font-medium">Warning:</p>
+            <p>{error}</p>
+            <button
+              onClick={loadStats}
+              className="mt-2 text-yellow-900 underline hover:no-underline"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-12 text-gray-600">Loading...</div>

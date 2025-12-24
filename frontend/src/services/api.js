@@ -68,100 +68,134 @@ const fetchAPI = async (endpoint, options = {}) => {
     defaultHeaders['Authorization'] = `Bearer ${token}`;
   }
 
-  const config = {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-    // Prevent caching
-    cache: 'no-store',
-    // When using relative URLs (Netlify proxy), mode can be 'same-origin'
-    // When using absolute URLs (development), use 'cors'
-    mode: API_URL.startsWith('/') ? 'same-origin' : 'cors',
-    credentials: 'omit'
-  };
-
-  // Add cache-busting timestamp for ALL requests (including OPTIONS preflight)
-  // This ensures browsers don't use cached failed CORS responses
+  // Add cache-busting timestamp for ALL requests
   const separator = endpoint.includes('?') ? '&' : '?';
-  endpoint = `${endpoint}${separator}_t=${Date.now()}`;
+  let endpointWithTimestamp = `${endpoint}${separator}_t=${Date.now()}`;
 
-  try {
-    const response = await fetch(`${API_URL}${endpoint}`, config);
-    
-    // Handle 401 Unauthorized (expired or invalid token)
-    if (response.status === 401) {
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('user');
-      // Only redirect if we're not already on login page
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+  // Retry logic for 503 errors and network failures
+  const maxRetries = 3;
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Add retry delay for subsequent attempts (exponential backoff)
+      if (attempt > 0) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Max 5 seconds
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Update cache-busting for retry
+        endpointWithTimestamp = endpointWithTimestamp.replace(/_t=\d+/, `_t=${Date.now()}`);
       }
-      throw new Error('Unauthorized - Please log in again');
-    }
-    
-    // Handle 403 Forbidden (expired token)
-    if (response.status === 403) {
-      const errorData = await response.json().catch(() => ({ error: 'Forbidden' }));
-      if (errorData.error?.includes('expired') || errorData.error?.includes('token')) {
+
+      // Create abort controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const config = {
+        ...options,
+        headers: {
+          ...defaultHeaders,
+          ...options.headers,
+        },
+        // Prevent caching
+        cache: 'no-store',
+        // When using relative URLs (Netlify proxy), mode can be 'same-origin'
+        // When using absolute URLs (development), use 'cors'
+        mode: API_URL.startsWith('/') ? 'same-origin' : 'cors',
+        credentials: 'omit',
+        signal: controller.signal
+      };
+
+      let response;
+      try {
+        response = await fetch(`${API_URL}${endpointWithTimestamp}`, config);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      
+      // Handle 503 Service Unavailable - retry
+      if (response.status === 503) {
+        if (attempt < maxRetries) {
+          console.warn(`Service unavailable (503), retrying... (attempt ${attempt + 1}/${maxRetries})`);
+          lastError = new Error('Service temporarily unavailable');
+          continue; // Retry
+        }
+        // Max retries reached
+        throw new Error('Service temporarily unavailable. Please try again in a moment.');
+      }
+      
+      // Handle 401 Unauthorized (expired or invalid token)
+      if (response.status === 401) {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');
+        // Only redirect if we're not already on login page
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login';
         }
-        throw new Error('Session expired - Please log in again');
+        throw new Error('Unauthorized - Please log in again');
       }
-    }
-
-    // Handle other errors
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(errorData.error || `HTTP ${response.status}`);
-    }
-
-    // Parse JSON response
-    const data = await response.json();
-    
-    // Return in Axios-like format for compatibility
-    return { data };
-  } catch (error) {
-    // Detect network/CORS errors
-    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
-      console.error('Network error - may be blocked by ad blocker or CORS issue:', error);
       
-      // Check if this might be a CORS cache issue - retry with fresh cache-busting
-      const isCORSError = error.message === 'Failed to fetch';
-      if (isCORSError) {
-        // Try once more with even more aggressive cache-busting
-        try {
-          const retryEndpoint = `${endpoint}${endpoint.includes('?') ? '&' : '?'}_cors_retry=${Date.now()}_${Math.random()}`;
-          const retryMode = API_URL.startsWith('/') ? 'same-origin' : 'cors';
-          const retryResponse = await fetch(`${API_URL}${retryEndpoint}`, {
-            ...config,
-            cache: 'no-store',
-            mode: retryMode,
-            credentials: 'omit'
-          });
-          
-          if (retryResponse.ok) {
-            const data = await retryResponse.json();
-            return { data };
+      // Handle 403 Forbidden (expired token)
+      if (response.status === 403) {
+        const errorData = await response.json().catch(() => ({ error: 'Forbidden' }));
+        if (errorData.error?.includes('expired') || errorData.error?.includes('token')) {
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
+          if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
           }
-        } catch (retryError) {
-          // Retry failed, continue with original error
+          throw new Error('Session expired - Please log in again');
         }
       }
-      
-      // Store error for UI to display
-      if (!sessionStorage.getItem('adBlockerWarningShown')) {
-        sessionStorage.setItem('adBlockerWarning', 'true');
-        sessionStorage.setItem('adBlockerWarningShown', 'true');
-        window.dispatchEvent(new CustomEvent('adBlockerDetected'));
+
+      // Handle other errors
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
+
+      // Success - parse and return data
+      const data = await response.json();
+      return { data };
+      
+    } catch (error) {
+      lastError = error;
+      
+      // Handle timeout errors
+      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+        if (attempt < maxRetries) {
+          console.warn(`Request timeout, retrying... (attempt ${attempt + 1}/${maxRetries})`);
+          continue; // Retry
+        }
+        throw new Error('Request timeout. The server may be slow or unavailable.');
+      }
+      
+      // Detect network/CORS errors
+      if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        if (attempt < maxRetries) {
+          console.warn(`Network error, retrying... (attempt ${attempt + 1}/${maxRetries})`);
+          continue; // Retry
+        }
+        
+        console.error('Network error - may be blocked by ad blocker or CORS issue:', error);
+        
+        // Store error for UI to display
+        if (!sessionStorage.getItem('adBlockerWarningShown')) {
+          sessionStorage.setItem('adBlockerWarning', 'true');
+          sessionStorage.setItem('adBlockerWarningShown', 'true');
+          window.dispatchEvent(new CustomEvent('adBlockerDetected'));
+        }
+        
+        throw new Error('Connection failed. This may be caused by an ad blocker or network issue. Please check your connection.');
+      }
+      
+      // For other errors (401, 403, etc.), don't retry
+      throw error;
     }
-    throw error;
   }
+  
+  // Should never reach here, but just in case
+  throw lastError || new Error('Request failed after multiple retries');
 };
 
 // Admin APIs
