@@ -90,6 +90,15 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/users', userRoutes);
 
+// API health check (for proxy testing)
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'API is working through proxy',
+    timestamp: new Date().toISOString() 
+  });
+});
+
 // Debug logging
 console.log('✓ Routes registered:');
 console.log('  - /api/auth');
