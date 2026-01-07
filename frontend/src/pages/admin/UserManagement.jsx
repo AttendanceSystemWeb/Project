@@ -146,20 +146,20 @@ const UserManagement = () => {
   return (
     <Layout>
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">User Management</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-6">User Management</h1>
 
         {/* Admin Account Section */}
-        <div className="bg-primary bg-opacity-10 border-2 border-primary rounded-lg p-6 mb-6">
-          <div className="flex justify-between items-center">
+        <div className="bg-primary bg-opacity-10 border-2 border-primary rounded-lg p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Your Admin Account</h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Your Admin Account</h2>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
                 Username: <span className="font-medium">{user?.username}</span>
               </p>
             </div>
             <button
               onClick={handleEditSelf}
-              className="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition"
+              className="px-3 sm:px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition text-xs sm:text-sm whitespace-nowrap"
             >
               Change Credentials
             </button>
@@ -292,43 +292,45 @@ const UserManagement = () => {
               <p className="text-gray-600">No teachers found.</p>
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Full Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Username
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Created At
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {teachers.map((teacher) => (
-                  <tr key={teacher.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-900">{teacher.full_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{teacher.username}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(teacher.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm">
-                      <button
-                        onClick={() => handleEditUser({...teacher, role: 'teacher'})}
-                        className="text-primary hover:text-opacity-80 font-medium"
-                      >
-                        Edit Credentials
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Full Name
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Username
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Created At
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {teachers.map((teacher) => (
+                    <tr key={teacher.id} className="hover:bg-gray-50">
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 whitespace-nowrap">{teacher.full_name}</td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{teacher.username}</td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                        {new Date(teacher.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-right text-sm whitespace-nowrap">
+                        <button
+                          onClick={() => handleEditUser({...teacher, role: 'teacher'})}
+                          className="text-primary hover:text-opacity-80 font-medium text-xs sm:text-sm"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

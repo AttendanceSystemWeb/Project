@@ -198,8 +198,8 @@ const AttendanceRecords = () => {
   return (
     <Layout>
       <div>
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Attendance Records</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-6">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Attendance Records</h1>
           <button
             onClick={() => {
               setShowStats(!showStats);
@@ -207,9 +207,9 @@ const AttendanceRecords = () => {
                 loadStudentStats();
               }
             }}
-            className="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition font-medium"
+            className="px-3 sm:px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition text-xs sm:text-sm font-medium whitespace-nowrap"
           >
-            {showStats ? 'Hide Student Statistics' : 'View Student Statistics'}
+            {showStats ? 'Hide Statistics' : 'View Statistics'}
           </button>
         </div>
 
@@ -324,28 +324,28 @@ const AttendanceRecords = () => {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
+                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
                           Student Name
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
+                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
                           Student ID
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
+                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
                           Class
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase">
+                        <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
                           Total Records
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase">
+                        <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
                           Present
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase">
+                        <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
                           Absent
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase">
+                        <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
                           Excused
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase">
+                        <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
                           Attendance Rate
                         </th>
                       </tr>
@@ -358,30 +358,30 @@ const AttendanceRecords = () => {
                       
                       return (
                         <tr key={stat.student_id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                          <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 font-medium whitespace-nowrap">
                             {stat.student_name}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{stat.student_number}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{stat.class_name}</td>
-                          <td className="px-6 py-4 text-sm text-center text-gray-900 font-medium">
+                          <td className="px-3 sm:px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{stat.student_number}</td>
+                          <td className="px-3 sm:px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{stat.class_name}</td>
+                          <td className="px-3 sm:px-6 py-4 text-sm text-center text-gray-900 font-medium whitespace-nowrap">
                             {total}
                           </td>
-                          <td className="px-6 py-4 text-sm text-center">
+                          <td className="px-3 sm:px-6 py-4 text-sm text-center whitespace-nowrap">
                             <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
                               {stat.present_count || 0}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-sm text-center">
+                          <td className="px-3 sm:px-6 py-4 text-sm text-center whitespace-nowrap">
                             <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-accent bg-opacity-20 text-accent">
                               {stat.absent_count || 0}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-sm text-center">
+                          <td className="px-3 sm:px-6 py-4 text-sm text-center whitespace-nowrap">
                             <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
                               {stat.excused_count || 0}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-sm text-center">
+                          <td className="px-3 sm:px-6 py-4 text-sm text-center whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
                               parseFloat(attendanceRate) >= 80 
                                 ? 'bg-green-100 text-green-800'

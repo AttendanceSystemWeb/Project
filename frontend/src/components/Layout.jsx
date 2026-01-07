@@ -31,23 +31,24 @@ const Layout = ({ children }) => {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-primary text-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <img src="/tishk.png" alt="Logo" className="h-12 w-auto" />
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-3 sm:py-4 gap-3 sm:gap-0">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <img src="/tishk.png" alt="Logo" className="h-8 sm:h-12 w-auto" />
               <div>
-                <h1 className="text-xl font-semibold">SAMS</h1>
-                <p className="text-sm text-gray-200">Student Attendance Management System</p>
+                <h1 className="text-lg sm:text-xl font-semibold">SAMS</h1>
+                <p className="text-xs sm:text-sm text-gray-200 hidden sm:block">Student Attendance Management System</p>
+                <p className="text-xs text-gray-200 sm:hidden">SAMS</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-between sm:justify-end">
               <div className="text-right">
-                <p className="text-sm font-medium">{user?.fullName}</p>
+                <p className="text-xs sm:text-sm font-medium truncate max-w-[120px] sm:max-w-none">{user?.fullName}</p>
                 <p className="text-xs text-gray-200 capitalize">{user?.role}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-white text-primary rounded hover:bg-gray-100 transition text-sm font-medium"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white text-primary rounded hover:bg-gray-100 transition text-xs sm:text-sm font-medium whitespace-nowrap"
               >
                 Logout
               </button>
@@ -58,13 +59,13 @@ const Layout = ({ children }) => {
 
       {/* Navigation */}
       <nav className="bg-gray-50 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-1 overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
             {navItems.map((item) => (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition ${
+                className={`px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium whitespace-nowrap transition ${
                   location.pathname === item.path
                     ? 'text-primary border-b-2 border-primary'
                     : 'text-gray-600 hover:text-primary'
@@ -78,7 +79,7 @@ const Layout = ({ children }) => {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         {children}
       </main>
     </div>

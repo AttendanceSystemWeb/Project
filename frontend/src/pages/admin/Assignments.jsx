@@ -81,11 +81,11 @@ const Assignments = () => {
   return (
     <Layout>
       <div>
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Teacher Assignments</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-6">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Teacher Assignments</h1>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition"
+            className="px-3 sm:px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition text-sm sm:text-base whitespace-nowrap"
           >
             {showForm ? 'Cancel' : '+ Add Assignment'}
           </button>
@@ -172,47 +172,49 @@ const Assignments = () => {
           </div>
         ) : (
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Teacher
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Class
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Subject
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Created At
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {assignments.map((assignment) => (
-                  <tr key={assignment.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-900">{assignment.teacher_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{assignment.class_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{assignment.subject_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(assignment.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm">
-                      <button
-                        onClick={() => handleDelete(assignment.id)}
-                        className="text-red-600 hover:text-red-800 font-medium"
-                      >
-                        Delete
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Teacher
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Class
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Subject
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Created At
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {assignments.map((assignment) => (
+                    <tr key={assignment.id} className="hover:bg-gray-50">
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 whitespace-nowrap">{assignment.teacher_name}</td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{assignment.class_name}</td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{assignment.subject_name}</td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                        {new Date(assignment.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-right text-sm whitespace-nowrap">
+                        <button
+                          onClick={() => handleDelete(assignment.id)}
+                          className="text-red-600 hover:text-red-800 font-medium text-xs sm:text-sm"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

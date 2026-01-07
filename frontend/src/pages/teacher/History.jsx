@@ -69,7 +69,7 @@ const History = () => {
   return (
     <Layout>
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Attendance History</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-6">Attendance History</h1>
 
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
@@ -125,76 +125,78 @@ const History = () => {
           </div>
         ) : (
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Lecture Time
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Class
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Subject
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase">
-                    Total
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase">
-                    Present
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase">
-                    Absent
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase">
-                    Excused
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">
-                    Submitted At
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {history.map((record) => (
-                  <tr key={record.session_id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {new Date(record.session_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {record.lecture_start_time && record.lecture_end_time
-                        ? `${record.lecture_start_time.slice(0, 5)} - ${record.lecture_end_time.slice(0, 5)}`
-                        : '-'}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{record.class_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{record.subject_name}</td>
-                    <td className="px-6 py-4 text-sm text-center text-gray-900 font-medium">
-                      {record.total_students}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-center">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
-                        {record.present_count}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-center">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-accent bg-opacity-20 text-accent">
-                        {record.absent_count}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-center">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
-                        {record.excused_count || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(record.submitted_at).toLocaleString()}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Date
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Lecture Time
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Class
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Subject
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Total
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Present
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Absent
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Excused
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase whitespace-nowrap">
+                      Submitted At
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {history.map((record) => (
+                    <tr key={record.session_id} className="hover:bg-gray-50">
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                        {new Date(record.session_date).toLocaleDateString()}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                        {record.lecture_start_time && record.lecture_end_time
+                          ? `${record.lecture_start_time.slice(0, 5)} - ${record.lecture_end_time.slice(0, 5)}`
+                          : '-'}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 whitespace-nowrap">{record.class_name}</td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{record.subject_name}</td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-center text-gray-900 font-medium whitespace-nowrap">
+                        {record.total_students}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-center whitespace-nowrap">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
+                          {record.present_count}
+                        </span>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-center whitespace-nowrap">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-accent bg-opacity-20 text-accent">
+                          {record.absent_count}
+                        </span>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-center whitespace-nowrap">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
+                          {record.excused_count || 0}
+                        </span>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                        {new Date(record.submitted_at).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
